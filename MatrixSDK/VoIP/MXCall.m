@@ -269,11 +269,7 @@ NSString *const kMXCallSupportsTransferringStatusDidChange = @"kMXCallSupportsTr
 
     [self setState:MXCallStateWaitLocalMedia reason:nil];
     
-    NSString *eventName = _isConferenceCall ? kMXAnalyticsVoipNamePlaceConferenceCall : kMXAnalyticsVoipNamePlaceCall;
-    
-    [[MXSDKOptions sharedInstance].analyticsDelegate trackValue:@(video)
-                                                       category:kMXAnalyticsVoipCategory
-                                                           name:eventName];
+    [MXSDKOptions.sharedInstance.analyticsDelegate trackCallStarted:self];
 
     MXWeakify(self);
     [callStackCallOperationQueue addOperationWithBlock:^{
@@ -541,9 +537,7 @@ NSString *const kMXCallSupportsTransferringStatusDidChange = @"kMXCallSupportsTr
             //  Send the hangup event
             MXWeakify(self);
             [_callSignalingRoom sendEventOfType:kMXEventTypeStringCallHangup content:content localEcho:nil success:^(NSString *eventId) {
-                [[MXSDKOptions sharedInstance].analyticsDelegate trackValue:@(reason)
-                                                                   category:kMXAnalyticsVoipCategory
-                                                                       name:kMXAnalyticsVoipNameCallHangup];
+                [MXSDKOptions.sharedInstance.analyticsDelegate trackCallEnded:self];
                 
                 terminateBlock();
             } failure:^(NSError *error) {
@@ -807,9 +801,7 @@ NSString *const kMXCallSupportsTransferringStatusDidChange = @"kMXCallSupportsTr
         // Store the total duration
         totalCallDuration = self.duration;
         
-        [[MXSDKOptions sharedInstance].analyticsDelegate trackValue:@(_endReason)
-                                                           category:kMXAnalyticsVoipCategory
-                                                               name:kMXAnalyticsVoipNameCallEnded];
+        [MXSDKOptions.sharedInstance.analyticsDelegate trackCallEnded:self];
         
         // Terminate the call at the stack level
         [callStackCall end];
@@ -1112,9 +1104,7 @@ NSString *const kMXCallSupportsTransferringStatusDidChange = @"kMXCallSupportsTr
     // Store if it is voice or video call
     self.isVideoCall = callInviteEventContent.isVideoCall;
     
-    [[MXSDKOptions sharedInstance].analyticsDelegate trackValue:@(_isVideoCall)
-                                                       category:kMXAnalyticsVoipCategory
-                                                           name:kMXAnalyticsVoipNameReceiveCall];
+    [MXSDKOptions.sharedInstance.analyticsDelegate trackCallStarted:self];
 
     [self setState:MXCallStateWaitLocalMedia reason:nil];
     
@@ -1654,10 +1644,7 @@ NSString *const kMXCallSupportsTransferringStatusDidChange = @"kMXCallSupportsTr
     if ([_delegate respondsToSelector:@selector(call:didEncounterError:reason:)])
     {
         [_delegate call:self didEncounterError:error reason:reason];
-        
-        [[MXSDKOptions sharedInstance].analyticsDelegate trackValue:@(reason)
-                                                           category:kMXAnalyticsVoipCategory
-                                                               name:kMXAnalyticsVoipNameCallError];
+        [MXSDKOptions.sharedInstance.analyticsDelegate trackCallError:self withReason:reason];
     }
     else
     {
